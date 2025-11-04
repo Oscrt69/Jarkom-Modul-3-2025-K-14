@@ -6,6 +6,9 @@
 | Mohamad Arkan Zahir Asyafiq  | 5027241120 |
 
 # 1
+
+Di awal buatlah topologi sesuai dengan soal.
+
 <img width="600" height="495" alt="Modul 3" src="https://github.com/user-attachments/assets/7573f66c-52de-47e1-a5f7-4e625c574546" />
 
 # 2
