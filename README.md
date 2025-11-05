@@ -167,6 +167,149 @@ Forwarded BOOTREQUEST for 10.15.43.68 to 10.15.43.34
 ```
 
 # 3
+
+Tujuan dari soal ini adalah mengonfigurasi Aldarion sebagai DHCP Server yang memberikan alamat IP otomatis kepada seluruh node client di jaringan.
+Dengan konfigurasi ini, setiap node (seperti Gilgalad, Amandil, Khamul, dan node lainnya) dapat memperoleh: <br>
+
+1. Alamat IP sesuai subnetnya, <br>
+
+2. Gateway yang benar (mengarah ke Durin sebagai router), <br>
+
+3. DNS server otomatis (biasanya mengarah ke Mordor atau DNS eksternal seperti 8.8.8.8). <br>
+
+Aldarion bekerja bersama Durin (DHCP Relay) agar dapat melayani beberapa subnet jaringan. <br>
+
+## Langkah-langkah Konfigurasi
+1. Jalankan perintah berikut di node Aldarion:
+
+```
+apt update
+apt install isc-dhcp-server -y
+```
+
+2. Buka file konfigurasi interface DHCP: <br>
+
+```
+nano /etc/default/isc-dhcp-server
+```
+
+Ubah baris berikut: <br>
+
+```
+INTERFACESv4="eth0"
+INTERFACESv6=""
+```
+Sesuaikan eth0 dengan interface yang terhubung ke jaringan internal (Durin). <br>
+
+3. Konfigurasi File Utama DHCP <br>
+
+Edit file:
+```
+nano /etc/dhcp/dhcpd.conf
+```
+
+Kemudian isi konfigurasi subnet untuk masing-masing jaringan.
+
+```
+# Subnet untuk jaringan Gilgalad
+subnet 10.15.43.64 netmask 255.255.255.192 {
+    range 10.15.43.66 10.15.43.126;
+    option routers 10.15.43.65;
+    option broadcast-address 10.15.43.127;
+    option domain-name-servers 10.15.43.35;
+    default-lease-time 360;
+    max-lease-time 7200;
+}
+
+# Subnet untuk jaringan Amandil
+subnet 10.15.43.128 netmask 255.255.255.128 {
+    range 10.15.43.130 10.15.43.190;
+    option routers 10.15.43.129;
+    option broadcast-address 10.15.43.191;
+    option domain-name-servers 10.15.43.35;
+    default-lease-time 360;
+    max-lease-time 7200;
+}
+
+# Subnet tanpa DHCP (link ke Durin)
+subnet 10.15.43.32 netmask 255.255.255.248 {
+}
+```
+
+Penjelasan:
+
+> range → alamat IP yang akan diberikan secara dinamis ke client.
+
+> routers → alamat gateway (Durin) untuk subnet tersebut.
+
+> domain-name-servers → IP DNS server (bisa Mordor / 8.8.8.8).
+
+> lease-time → lama waktu peminjaman IP sebelum diperpanjang.
+
+4. Restart DHCP Server <br>
+
+Setelah file selesai dikonfigurasi, restart service-nya:
+
+```
+systemctl restart isc-dhcp-server
+systemctl enable isc-dhcp-server
+```
+
+5. Verifikasi Status DHCP Server <br>
+
+Pastikan server aktif dan tidak ada error konfigurasi:<br>
+
+```
+systemctl status isc-dhcp-server
+```
+
+Untuk memeriksa log aktivitas DHCP: <br>
+
+```
+journalctl -u isc-dhcp-server | tail -n 10
+```
+
+## Uji Coba
+
+Uji 1 
+
+Masuk ke salah satu node client (misalnya Gilgalad atau Amandil), lalu jalankan:
+
+```
+dhclient -v
+```
+
+Hasil yang diharapkan:
+
+```
+DHCPDISCOVER on eth0 to 255.255.255.255 port 67 interval 3
+DHCPOFFER from 10.15.43.34
+DHCPREQUEST for 10.15.43.68
+DHCPACK from 10.15.43.34
+bound to 10.15.43.68 -- renewal in 300 seconds.
+```
+
+Artinya client berhasil memperoleh IP dari Aldarion melalui Durin (relay). <br>
+
+Uji 2  <br>
+```
+ip addr show eth0
+```
+
+Hasilnya akan memperlihatkan IP yang diberikan sesuai range subnet masing-masing:
+
+Uji 3 — Uji koneksi antar node dan internet  <>br.
+
+Coba dari client:
+
+```
+ping 10.15.43.34    # ke Aldarion
+ping 10.15.43.33    # ke Durin
+ping google.com     # ke internet
+```
+
+Semua harus berhasil jika router Durin (soal 2) dan DNS server (soal 4) sudah benar.
+
 # 4
 # 5
 # 6
