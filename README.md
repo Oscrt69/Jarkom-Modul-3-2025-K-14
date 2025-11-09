@@ -1022,6 +1022,8 @@ Tidak ada error atau penurunan signifikan, sehingga sistem load balancing bekerj
 
 # SOAL 12
 
+
+
 <img width="777" height="365" alt="image" src="https://github.com/user-attachments/assets/f4c86311-a8b0-4392-9ebd-a341bb7bd5a4" />
 
 <img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/5881675d-f451-4517-ab91-4fd7bcb5124e" />
