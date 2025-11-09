@@ -1022,7 +1022,91 @@ Tidak ada error atau penurunan signifikan, sehingga sistem load balancing bekerj
 
 # SOAL 12
 
+Langkah-Langkah Pengujian <br>
 
+### 1. Verifikasi Instalasi PHP Worker
+Setiap worker harus memiliki layanan PHP-FPM dan Nginx yang sudah terpasang.
+
+```
+========================================
+✓ PHP Worker Galadriel Installation Complete
+========================================
+Installed:
+ - PHP 8.4-FPM
+ - Nginx
+ - Simple index.php
+
+Configuration:
+ - Hostname : Galadriel
+ - IP        : 192.218.2.3
+ - Port      : 8004
+ - Web root  : /var/www/html
+========================================
+```
+
+Worker Celeborn dan Oropher dikonfigurasi serupa dengan port 8005 dan 8006. <br>
+
+2. Uji Koneksi Langsung ke Worker <br>
+Dilakukan dari client Miriel untuk memastikan worker merespons permintaan HTTP secara langsung. <br>
+
+```
+# Tes Galadriel
+curl http://galadriel.k14.com:8004/
+curl http://galadriel.k14.com:8004/index.php
+
+curl http://celeborn.k14.com:8005/
+curl http://celeborn.k14.com:8005/index.php
+```
+
+Hasil respon (contoh Galadriel):
+
+```
+=== Taman Peri - PHP Worker ===
+Hostname: Galadriel
+Server IP: 192.218.2.3
+Client IP: 192.218.1.11
+Date/Time: 2025-11-09 05:40:45
+PHP Version: 8.4.11
+```
+
+Hasil respon (contoh Celeborn):
+
+```
+=== Taman Peri - PHP Worker ===
+Hostname: Celeborn
+Server IP: 192.218.2.4
+Client IP: 192.218.1.11
+Date/Time: 2025-11-09 05:42:02
+PHP Version: 8.4.11
+```
+
+✅ Hasil menunjukkan bahwa semua worker dapat diakses langsung dan menjalankan PHP dengan benar. <br>
+
+3. Pengujian Load Balancer Elros <br>
+Dari node Miriel (Client) dilakukan pengujian beban dengan Apache Benchmark (ab):
+
+```
+ab -n 100 -c 10 http://elros.k14.com/api/airing
+```
+
+📄 Hasil Pengujian Pertama:
+
+```
+Requests per second:    463.09 [#/sec]
+Time per request:        21.594 [ms]
+Transfer rate:           138.84 [Kbytes/sec]
+Failed requests:         0
+
+```
+
+📄 Hasil Pengujian Kedua:
+
+```
+Requests per second:    452.26 [#/sec]
+Time per request:        22.111 [ms]
+Transfer rate:           135.59 [Kbytes/sec]
+Failed requests:         0
+```
 
 <img width="777" height="365" alt="image" src="https://github.com/user-attachments/assets/f4c86311-a8b0-4392-9ebd-a341bb7bd5a4" />
 
@@ -1040,10 +1124,178 @@ Tidak ada error atau penurunan signifikan, sehingga sistem load balancing bekerj
 
 # 14
 
+Tahapan Konfigurasi <br>
+
+1. Membuat File Password <br>
+Pada node **Celeborn**, file password dibuat menggunakan `htpasswd` dari paket `apache2-utils`.
+
+```
+sudo apt install apache2-utils -y
+sudo htpasswd -c /etc/nginx/.htpasswd noldor
+```
+
+📄 Saat diminta password, masukkan:
+
+```
+New password: silvan
+Re-type new password: silvan
+Adding password for user noldor
+```
+File /etc/nginx/.htpasswd sekarang berisi hash dari user noldor dengan password silvan. <br>
+
+2. Tambahkan directive autentikasi ke dalam konfigurasi virtual host Celeborn (/etc/nginx/sites-available/celeborn):
+
+```
+server {
+    listen 8005;
+    server_name celeborn.k14.com;
+
+    root /var/www/html;
+    index index.php index.html;
+
+    location / {
+        auth_basic "Restricted Area - Celeborn";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
+    }
+}
+```
+
+Setelah itu, restart Nginx:
+
+```
+sudo systemctl restart nginx
+```
+
+1. Mengakses dengan Autentikasi
+
+```
+curl -u noldor:silvan http://celeborn.k14.com:8005/
+
+```
+Hasil Output:
+
+```
+=== Taman Peri - PHP Worker ===
+Hostname: Celeborn
+Server IP: 192.218.2.4
+Client IP: 192.218.1.11
+Date/Time: 2025-11-09 05:48:40
+PHP Version: 8.4.11
+```
+
+Artinya: Autentikasi berhasil, server menerima kredensial noldor:silvan. <br>
+
+2. Mengakses Tanpa Autentikasi
+   
+```
+curl http://celeborn.k14.com:8005/
+```
+
+Hasil Output:
+
+```
+<html>
+<head><title>401 Authorization Required</title></head>
+<body>
+<center><h1>401 Authorization Required</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+```
+
+Artinya: Server menolak akses karena tidak ada kredensial — Nginx merespons dengan kode 401 Unauthorized.
+
 <img width="1026" height="347" alt="image" src="https://github.com/user-attachments/assets/22fe05a5-c82c-4444-b0f7-501f3d905f16" />
 
 
 # SOAL 15
+
+Konfigurasi
+
+1. Menambahkan Script `index.php`
+File `index.php` pada Galadriel diubah untuk menampilkan berbagai informasi server, pengunjung, dan header HTTP.
+
+Lokasi File: <br>
+```
+/var/www/html/index.php
+```
+
+Isi File:
+```
+<?php
+echo "=== Taman Peri - PHP Worker ===\n";
+echo "====================================\n\n";
+
+// Server Information
+echo "Server Information:\n";
+echo " Hostname: " . gethostname() . "\n";
+echo " Server IP: " . $_SERVER['SERVER_ADDR'] . "\n";
+echo " Server Port: " . $_SERVER['SERVER_PORT'] . "\n";
+echo " PHP Version: " . phpversion() . "\n\n";
+
+// Visitor Information
+echo "Visitor Information:\n";
+echo " Real IP Address: " . $_SERVER['REMOTE_ADDR'] . "\n";
+echo " Direct Connection IP: " . $_SERVER['REMOTE_ADDR'] . "\n\n";
+
+// Request Information
+echo "Request Information:\n";
+echo " Request Time: " . date("Y-m-d H:i:s") . "\n";
+echo " Request Method: " . $_SERVER['REQUEST_METHOD'] . "\n";
+echo " Request URI: " . $_SERVER['REQUEST_URI'] . "\n";
+echo " User Agent: " . $_SERVER['HTTP_USER_AGENT'] . "\n\n";
+
+// Headers (X-*)
+echo "Headers (X-*):\n";
+if (isset($_SERVER['HTTP_X_REAL_IP'])) {
+    echo " HTTP_X_REAL_IP: " . $_SERVER['HTTP_X_REAL_IP'] . "\n";
+} else {
+    echo " HTTP_X_REAL_IP: (not set)\n";
+}
+echo "====================================\n";
+?>
+```
+
+2. Pengujian Akses dari Client (Miriel) <br>
+Akses menggunakan curl
+
+```
+curl -u noldor:silvan http://galadriel.k14.com:8004/
+```
+
+Hasil Output:
+
+```
+=== Taman Peri - PHP Worker ===
+===========
+=========================
+Server Information:
+ Hostname: Galadriel
+ Server IP: 192.218.2.3
+ Server Port: 8004
+ PHP Version: 8.4.11
+
+Visitor Information:
+ Real IP Address: 192.218.1.11
+ Direct Connection IP: 192.218.1.11
+
+Request Information:
+ Request Time: 2025-11-09 05:50:50
+ Request Method: GET
+ Request URI: /
+ User Agent: curl/8.14.1
+
+Headers (X-*):
+ HTTP_X_REAL_IP: 192.218.1.11
+====================================
+```
 
 <img width="1019" height="527" alt="image" src="https://github.com/user-attachments/assets/d96ff59c-24ad-4f33-9793-0fa9049cf305" />
 
@@ -1052,13 +1304,190 @@ Tidak ada error atau penurunan signifikan, sehingga sistem load balancing bekerj
 
 # SOAL 16
 
-<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/0ed67527-4cdf-4da4-9985-a0a97c7e2a0e" />
+Tahapan Konfigurasi <br>
 
+1. Konfigurasi Nginx di Load Balancer (Elros) <br>
+
+File konfigurasi load balancer (`/etc/nginx/sites-available/elros`) disesuaikan agar meneruskan informasi IP pengunjung menggunakan header tambahan:
+
+```
+upstream worker_servers {
+    server galadriel.k14.com:8004;
+    server celeborn.k14.com:8005;
+    server oropher.k14.com:8006;
+}
+
+server {
+    listen 80;
+    server_name elros.k14.com;
+
+    location / {
+        proxy_pass http://worker_servers;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Kemudian restart service nginx: <br>
+
+```
+sudo systemctl restart nginx
+```
+
+2. Konfigurasi PHP Worker (Galadriel) <br>
+File /var/www/html/index.php sudah dimodifikasi sebelumnya (pada soal 15) untuk menampilkan semua informasi request termasuk header X-*:
+
+```
+// Headers (X-*)
+echo "Headers (X-*):\n";
+if (isset($_SERVER['HTTP_X_REAL_IP'])) {
+    echo " HTTP_X_REAL_IP: " . $_SERVER['HTTP_X_REAL_IP'] . "\n";
+}
+if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+    echo " HTTP_X_FORWARDED_FOR: " . $_SERVER['HTTP_X_FORWARDED_FOR'] . "\n";
+}
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+    echo " HTTP_X_FORWARDED_PROTO: " . $_SERVER['HTTP_X_FORWARDED_PROTO'] . "\n";
+}
+echo "====================================\n";
+```
+
+3. Pengujian dari Client (Miriel) <br>
+Dilakukan pengujian dengan mengakses worker melalui load balancer menggunakan perintah berikut:
+
+```
+lynx http://elros.k14.com/
+```
+
+Hasil Output pada Galadriel:
+
+```
+=== Taman Peri - PHP Worker ===
+Server Information: Hostname: Galadriel
+Server IP: 192.218.2.3
+Server Port: 8004
+PHP Version: 8.4.11
+
+Visitor Information:
+ Real IP Address: 192.218.2.36
+ Direct Connection IP: 192.218.2.36
+
+Request Information:
+ Request Time: 2025-11-09 06:37:07
+ Request Method: GET
+ Request URI: /
+ User Agent: Lynx/2.9.2 libwww-FM/2.14 SSL-MM/1.4.1 GNUTLS/3.8.5
+
+Headers (X-*):
+ HTTP_X_REAL_IP: 192.218.2.36
+ HTTP_X_FORWARDED_PROTO: http
+ HTTP_X_FORWARDED_FOR: 192.218.1.11
+====================================
+
+```
+
+<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/0ed67527-4cdf-4da4-9985-a0a97c7e2a0e" />
 
 # 17
 
+Topologi Pengujian
 
+| Node | Fungsi | IP | Port |
+|------|---------|----|------|
+| **Pharazon** | Reverse Proxy / Load Balancer | 192.218.2.36 | 80 |
+| **Galadriel** | PHP Worker 1 | 192.218.2.3 | 8004 |
+| **Celeborn** | PHP Worker 2 | 192.218.2.4 | 8005 |
+| **Oropher** | PHP Worker 3 | 192.218.2.5 | 8006 |
+| **Miriel** | Client penguji | 192.218.1.11 | — |
+
+Tahapan Konfigurasi: <br>
+
+1. Konfigurasi Nginx di Pharazon (Load Balancer) <br>
+File konfigurasi `/etc/nginx/sites-available/pharazon` diatur untuk menerapkan algoritma *round robin* ke ketiga worker:
+
+```
+upstream worker_servers {
+    server galadriel.k14.com:8004;
+    server celeborn.k14.com:8005;
+    server oropher.k14.com:8006;
+}
+
+server {
+    listen 80;
+    server_name pharazon.k14.com;
+
+    location / {
+        proxy_pass http://worker_servers;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Restart Nginx:
+
+```
+sudo systemctl restart nginx
+```
+
+2. Pengujian Load Balancer <br>
+Pengujian dilakukan dari client (Miriel) untuk mengirim 30 permintaan ke pharazon.k14.com menggunakan kredensial autentikasi dasar (noldor:silvan):
+
+```
+for i in {1..30}; do
+    curl -u noldor:silvan http://pharazon.k14.com/ 2>/dev/null | grep "Hostname:"
+done | sort | uniq -c
+```
+
+Output yang diperoleh:
+
+```
+ 10  Hostname: Celeborn
+ 11  Hostname: Galadriel
+  9  Hostname: Oropher
+```
 
 # 18
+
+Tujuan soal ini untuk menentukan apakah penambahan *weight* pada algoritma *load balancing* dapat meningkatkan performa dan stabilitas sistem. <br>
+
+Konfigurasi
+
+```
+nano /etc/nginx/sites-available/elros
+Tambahkan weight berbeda pada setiap worker untuk membagi beban berdasarkan kemampuan server:
+```
+
+```
+upstream kesatria_numenor {
+    server elendil.k14.com:8001 weight=3;
+    server isildur.k14.com:8002 weight=2;
+    server anarion.k14.com:8003 weight=1;
+}
+```
+
+Simpan dan restart Nginx:
+
+```
+sudo systemctl restart nginx
+```
+
+Lakukan benchmark test dengan perintah:
+
+```
+ab -n 2000 -c 100 http://elros.k14.com/api/airing/
+```
+
+Amati hasil melalui:
+
+```
+tail -f /var/log/nginx/elros_access.log
+```
+
 # 19
 # 20
