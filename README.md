@@ -311,6 +311,142 @@ ping google.com     # ke internet
 Semua harus berhasil jika router Durin (soal 2) dan DNS server (soal 4) sudah benar.
 
 # 4
+
+Tujuan dari soal ini adalah untuk mengatur lease time alamat IP pada server DHCP agar sesuai dengan kebijakan Raja Aldarion. <br>
+Adapun ketentuannya sebagai berikut:
+
+> Lease time Amandil 30 menit.
+
+> Lease time Gilgalad 10 menit.
+
+> Lease maksimum untuk semua client → 1 jam.
+
+Dengan konfigurasi ini, IP address akan lebih cepat direalokasikan ke perangkat lain jika node lama sudah tidak aktif dan meningkatkan efisiensi penggunaan IP. <br>
+
+### Langkah-langkah Konfigurasi
+1. Buka Konfigurasi DHCP Server <br>
+
+Edit file konfigurasi utama DHCP:
+```
+nano /etc/dhcp/dhcpd.conf
+```
+
+2. Tambahkan atau Sesuaikan Subnet Setiap Keluarga <br>
+
+Ubah pengaturan subnet yang sudah dibuat pada soal nomor 3, lalu tambahkan parameter lease time sesuai ketentuan. <br>
+
+Contoh konfigurasi lengkap:
+
+```
+# Subnet untuk Keluarga Manusia (Amandil)
+subnet 10.15.43.64 netmask 255.255.255.192 {
+    range 10.15.43.66 10.15.43.94;
+    option routers 10.15.43.65;
+    option broadcast-address 10.15.43.95;
+    option domain-name-servers 10.15.43.35;
+    default-lease-time 1800;  # 30 menit
+    max-lease-time 3600;      # 1 jam
+}
+
+# Subnet untuk Keluarga Peri (Gilgalad)
+subnet 10.15.43.96 netmask 255.255.255.192 {
+    range 10.15.43.98 10.15.43.126;
+    option routers 10.15.43.97;
+    option broadcast-address 10.15.43.127;
+    option domain-name-servers 10.15.43.35;
+    default-lease-time 600;   # 10 menit
+    max-lease-time 3600;      # 1 jam
+}
+
+# Subnet tanpa DHCP (jaringan router Durin)
+subnet 10.15.43.32 netmask 255.255.255.248 {
+}
+```
+
+Semua subnet diarahkan ke DNS server Erendis (10.15.43.35).
+
+3. Simpan dan Restart DHCP Server <br>
+
+```
+systemctl restart isc-dhcp-server
+systemctl enable isc-dhcp-server
+```
+
+Periksa apakah konfigurasi benar:
+
+```
+systemctl status isc-dhcp-server
+```
+
+Jika berhasil, akan muncul status: `Active: active (running)`
+
+### Uji Coba (Testing)
+
+Uji 1<br>
+Masuk ke node Amandil lalu jalankan:
+```
+dhclient -v
+```
+
+Output yang diharapkan:
+
+```
+DHCPDISCOVER on eth0 to 255.255.255.255 port 67
+DHCPOFFER from 10.15.43.34
+DHCPREQUEST for 10.15.43.70
+DHCPACK from 10.15.43.34
+bound to 10.15.43.70 -- renewal in 1800 seconds.
+```
+
+Artinya lease time = 1800 detik (30 menit).
+
+Uji 2 <br>
+
+Masuk ke node Gilgalad lalu jalankan:
+```
+dhclient -v
+```
+
+Output yang diharapkan:
+```
+bound to 10.15.43.100 -- renewal in 600 seconds.
+```
+
+Artinya lease time = 600 detik (10 menit).
+
+🔹 Uji 3 <br>
+
+Masuk ke node Aldarion dan lihat daftar lease:
+
+```
+cat /var/lib/dhcp/dhcpd.leases
+```
+
+Contoh hasil:
+
+```
+lease 10.15.43.70 {
+  starts 4 2025/11/06 05:00:00;
+  ends 4 2025/11/06 05:30:00;
+  cltt 4 2025/11/06 05:00:00;
+  binding state active;
+  next binding state free;
+  hardware ethernet 02:42:ac:11:00:1a;
+  uid "\001\002B\254\241\305\034";
+  client-hostname "Amandil";
+}
+```
+
+Uji 4 <br>
+
+Setelah waktu lease hampir habis, jalankan perintah:
+
+```
+dhclient -r && dhclient -v
+```
+
+Pastikan IP tetap sama (DHCP renew success).
+
 # 5
 # 6
 # 7
