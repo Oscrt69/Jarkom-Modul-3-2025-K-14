@@ -1,4 +1,4 @@
-![WhatsApp Image 2025-11-09 at 15 35 12_90fe9233](https://github.com/user-attachments/assets/09588b42-7a60-4b6f-996b-a012848854d3)# Jarkom-Modul-3-2025-K-14
+# Jarkom-Modul-3-2025-K-14
 
 | Nama                         | Nrp        |
 | ---------------------------- | ---------- |
