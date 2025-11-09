@@ -414,7 +414,7 @@ bound to 10.15.43.100 -- renewal in 600 seconds.
 
 Artinya lease time = 600 detik (10 menit).
 
-🔹 Uji 3 <br>
+Uji 3 <br>
 
 Masuk ke node Aldarion dan lihat daftar lease:
 
@@ -448,18 +448,84 @@ dhclient -r && dhclient -v
 Pastikan IP tetap sama (DHCP renew success).
 
 # 5
+
+<img width="1349" height="975" alt="image" src="https://github.com/user-attachments/assets/57287333-7a52-47c7-8a49-823389a0fe49" />
+
 # 6
+
+<img width="976" height="586" alt="image" src="https://github.com/user-attachments/assets/15997fc0-d200-4428-8e4f-fdcd1a2a2ee0" />
+
 # 7
+
+<img width="672" height="41" alt="image" src="https://github.com/user-attachments/assets/703115da-5485-4b45-ae25-f3a60c9e5695" />
+
+<img width="1069" height="106" alt="image" src="https://github.com/user-attachments/assets/ece9cf45-d573-45e2-a4b7-bd4c54fde2fe" />
+
+<img width="1600" height="640" alt="image" src="https://github.com/user-attachments/assets/56363148-51fa-4977-b8c3-24fba3636bd4" />
+
+<img width="1600" height="328" alt="image" src="https://github.com/user-attachments/assets/43ab2f38-433e-444f-9bdf-f2b7064e5c4d" />
+
+
 # 8
+
+
+
 # 9
+
+<img width="1600" height="759" alt="image" src="https://github.com/user-attachments/assets/f60251be-78cc-4da1-bcfb-5a0635a1eeaf" />
+
+
 # 10
+
+<img width="737" height="646" alt="image" src="https://github.com/user-attachments/assets/04ad1d05-ead3-4290-88f2-f72903fab40f" />
+
+<img width="1056" height="392" alt="image" src="https://github.com/user-attachments/assets/9330facb-d4a1-44f4-a036-6a9b983c1657" />
+
+
 # 11
+
+<img width="1600" height="816" alt="image" src="https://github.com/user-attachments/assets/61f6bc44-2644-4e21-8c42-9cb074434e85" />
+
+<img width="1450" height="865" alt="image" src="https://github.com/user-attachments/assets/4fcd027b-41de-4b6b-a586-bfd3a2212b29" />
+
+
 # 12
+
+<img width="777" height="365" alt="image" src="https://github.com/user-attachments/assets/f4c86311-a8b0-4392-9ebd-a341bb7bd5a4" />
+
+<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/5881675d-f451-4517-ab91-4fd7bcb5124e" />
+
+<img width="940" height="341" alt="image" src="https://github.com/user-attachments/assets/035c27b8-af42-4dbf-a61f-fa1808e8a9e2" />
+
+<img width="795" height="328" alt="image" src="https://github.com/user-attachments/assets/62eb0ac9-228b-44e4-a041-f74c64fa211b" />
+
+<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/2e1f982c-a8b5-4970-ab91-c8dd29662c60" />
+
+
 # 13
+
+
 # 14
+
+<img width="1026" height="347" alt="image" src="https://github.com/user-attachments/assets/22fe05a5-c82c-4444-b0f7-501f3d905f16" />
+
+
 # 15
+
+<img width="1019" height="527" alt="image" src="https://github.com/user-attachments/assets/d96ff59c-24ad-4f33-9793-0fa9049cf305" />
+
+<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/8cb4cb0c-24ec-4268-b6fe-9cf19b3fb5b1" />
+
+
 # 16
+
+<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/0ed67527-4cdf-4da4-9985-a0a97c7e2a0e" />
+
+
 # 17
+
+
+
 # 18
 # 19
 # 20
